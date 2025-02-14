@@ -3,25 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Esercizio Moltiplicazioni</title>
+  <title>Moltiplicazioni</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       max-width: 800px;
       margin: 20px auto;
       padding: 20px;
+      background-color: #222; /* Tema Dark predefinito */
+      color: #eee;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .light-theme {
+      background-color: #fff;
+      color: #000;
     }
     #question {
       font-size: 24px;
       margin: 20px 0;
       padding: 10px;
+      background: #444; /* Dark */
+      transition: background 0.3s;
+    }
+    .light-theme #question {
       background: #f0f0f0;
     }
     #stats {
       margin: 20px 0;
       padding: 15px;
-      background: #f8f8f8;
+      background: #333; /* Dark */
       border-radius: 5px;
+      transition: background 0.3s;
+    }
+    .light-theme #stats {
+      background: #f8f8f8;
     }
     #recent-errors {
       color: #cc0000;
@@ -56,11 +71,27 @@
         width: 100%;
       }
     }
+    /* Bottone per il cambio tema */
+    #theme-toggle {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      padding: 5px 10px;
+      font-size: 16px;
+    }
   </style>
+  <!-- Favicon in formato PNG reperite dal web -->
+  <link rel="apple-touch-icon" href="https://www.iconarchive.com/download/i3927/bad-blood/yolks-2/X3.128.png">
+  <link rel="icon" href="https://www.iconarchive.com/download/i3927/bad-blood/yolks-2/X3.48.png" type="image/png">
 </head>
 <body>
+  <!-- Bottone per il cambio tema (Dark di default) -->
+  <button id="theme-toggle">Tema Light</button>
+  
   <div id="question"></div>
-  <input type="text" id="answer" placeholder="Scrivi qui...">
+  <!-- Input di tipo number con inputmode per tastiera numerica -->
+  <input type="number" id="answer" placeholder="Scrivi qui..." inputmode="numeric">
   <button onclick="checkAnswer()">Invia</button>
   
   <div id="stats">
@@ -75,7 +106,6 @@
     <ul id="errors-list"></ul>
     <button onclick="resetLog()">Reset Log</button>
     <button onclick="saveLogToFile()">Salva Log</button>
-    <button onclick="deleteCookies()">Elimina Cookies</button>
   </div>
 
   <script>
@@ -153,17 +183,10 @@
       document.body.removeChild(link);
     }
 
-    function deleteCookies() {
-      document.cookie.split(";").forEach(function(c) {
-        document.cookie = c.trim().split("=")[0] +
-          '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      });
-      console.log("Cookies eliminati.");
-    }
-
     function checkAnswer() {
-      const userAnswer = document.getElementById('answer').value.trim();
-      document.getElementById('answer').value = '';
+      const answerField = document.getElementById('answer');
+      const userAnswer = answerField.value.trim();
+      answerField.value = '';
       const responseTime = (Date.now() - startTime) / 1000;
       responseTimes.push(responseTime);
       
@@ -172,12 +195,14 @@
         saveError(`${currentQuestion.num1}×${currentQuestion.num2} = ${currentQuestion.result}  (nessuna risposta)`);
         updateStats();
         generateQuestion();
+        answerField.focus();
         return;
       }
 
       if(isNaN(userAnswer)) {
         totalQuestions--;
         updateStats();
+        answerField.focus();
         return;
       }
 
@@ -188,6 +213,7 @@
 
       updateStats();
       generateQuestion();
+      answerField.focus();
     }
 
     window.onload = function() {
@@ -197,6 +223,18 @@
         if(e.key === 'Enter') checkAnswer();
       });
       document.getElementById('answer').focus();
+
+      // Logica per il cambio tema
+      const themeToggle = document.getElementById('theme-toggle');
+      themeToggle.addEventListener('click', function() {
+        if(document.body.classList.contains('light-theme')) {
+          document.body.classList.remove('light-theme');
+          themeToggle.textContent = 'Tema Light';
+        } else {
+          document.body.classList.add('light-theme');
+          themeToggle.textContent = 'Tema Dark';
+        }
+      });
     };
   </script>
 </body>
