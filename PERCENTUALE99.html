@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calcolo Percentuale</title>
+  <style>
+    /* Blocca l'altezza della pagina e disabilita lo scroll */
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+    /* Impostazioni globali: tema scuro, background nero e testo in grigio medio */
+    body {
+      background-color: #000;
+      color: #ccc; /* grigio medio */
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0.1em;
+    }
+    .container {
+      max-width: 480px; /* dimensione adatta allo smartphone */
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 0.5em;
+      font-size: 1.2em;
+    }
+    /* Layout a righe: etichetta a sinistra, campo a destra con bottoni */
+    .row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.9em;
+    }
+    .label {
+      flex: 0 0 24%;
+      padding-right: 0.1em;
+      font-size: 1em;
+      font-weight: bold; /* tutte le etichette in bold */
+    }
+    .input-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+    /* I campi di input ora occupano il 70% dello spazio disponibile */
+    input {
+      width: 70%;
+      padding: 0.1em;
+      background-color: #222;
+      border: 1px solid #444;
+      color: #ccc;
+      font-size: 1em;
+      border-radius: 4px;
+      transition: background-color 0.75s ease;
+    }
+    input[readonly] {
+      opacity: 0.8;
+    }
+    /* Bottoni generici: ridotti al minimo spazio e padding */
+    button {
+      background: none;
+      border: none;
+      color: #ccc;
+      font-size: 1.2em;
+      cursor: pointer;
+    }
+    /* Bottoni "cancella" e "copia": spazio minimo */
+    button.clear,
+    button.copy {
+      margin: 0;
+      padding: 0;
+    }
+    button:focus {
+      outline: none;
+    }
+    /* Pulsanti Reset e Incolla centrati in fondo, in un'unica riga */
+    #resetPasteContainer {
+      width: 100%;
+      text-align: center;
+      margin-top: 0.4em;
+    }
+    #clearAllBtn,
+    #pasteBtn {
+      font-size: 1.2em;
+      padding: 0.3em 0.6em;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: none;
+      color: #ccc;
+      cursor: pointer;
+      margin: 0 0.2em;
+    }
+    /* Effetto blink per il background del body (quando si copia) */
+    .blink-page {
+      animation: blink-page 0.75s;
+    }
+    @keyframes blink-page {
+      0% { background-color: #000; }
+      50% { background-color: #222; }
+      100% { background-color: #000; }
+    }
+  </style>
+  <!-- Favicon in formato PNG (immagine reale reperibile sul web) -->
+  <link rel="apple-touch-icon" href="https://www.iconarchive.com/download/i85600/graphicloads/100-flat/percentage.128.png">
+  <link rel="icon" href="https://www.iconarchive.com/download/i85600/graphicloads/100-flat/percentage.48.png" type="image/png">
+</head>
+<body>
+  <div class="container">
+    <h1>Calcolo Percentuale</h1>
+    <!-- Riga "Valore iniziale" -->
+    <div class="row">
+      <div class="label">Valore iniziale</div>
+      <div class="input-container">
+        <input id="iniziale" type="tel" placeholder="" autofocus>
+        <button class="clear" data-target="iniziale">&#x274C;</button>
+        <button class="copy" data-target="iniziale">&#x1F4CB;</button>
+      </div>
+    </div>
+    <!-- Riga "%" -->
+    <div class="row">
+      <div class="label">%</div>
+      <div class="input-container">
+        <input id="tasso" type="tel" placeholder="">
+        <button class="clear" data-target="tasso">&#x274C;</button>
+        <button class="copy" data-target="tasso">&#x1F4CB;</button>
+      </div>
+    </div>
+    <!-- Riga "Differenza" -->
+    <div class="row">
+      <div class="label">Differenza</div>
+      <div class="input-container">
+        <input id="valorePerc" type="tel" placeholder="" readonly>
+        <button class="clear" data-target="valorePerc">&#x274C;</button>
+        <button class="copy" data-target="valorePerc">&#x1F4CB;</button>
+      </div>
+    </div>
+    <!-- Riga "Valore Finale -" -->
+    <div class="row">
+      <div class="label">Valore Finale -</div>
+      <div class="input-container">
+        <input id="finalMinus" type="tel" placeholder="">
+        <button class="clear" data-target="finalMinus">&#x274C;</button>
+        <button class="copy" data-target="finalMinus">&#x1F4CB;</button>
+      </div>
+    </div>
+    <!-- Riga "Valore Finale +" -->
+    <div class="row">
+      <div class="label">Valore Finale +</div>
+      <div class="input-container">
+        <input id="finalPlus" type="tel" placeholder="">
+        <button class="clear" data-target="finalPlus">&#x274C;</button>
+        <button class="copy" data-target="finalPlus">&#x1F4CB;</button>
+      </div>
+    </div>
+    <!-- Riga per i tasti Reset e Incolla (nella stessa riga) -->
+    <div id="resetPasteContainer">
+      <button id="clearAllBtn" title="Cancella tutti i campi">&#x274C; Reset</button>
+      <button id="pasteBtn" title="Incolla dal clipboard">📋 Incolla</button> 
+    </div>
+  </div>
+
+  <script>
+    /******************
+     * Logica JavaScript
+     ******************/
+
+    // Funzione di arrotondamento a due cifre decimali
+    function round2(value) {
+      return Number(value.toFixed(2));
+    }
+
+    // Flag per evitare cicli durante l'aggiornamento
+    let isUpdating = false;
+
+    // Memorizziamo l'ultimo aggiornamento (timestamp) per ciascun campo opzionale
+    let lastModified = {
+      tasso: 0,
+      finalPlus: 0,
+      finalMinus: 0
+    };
+
+    // Flag per "bloccare" i campi finali se cancellati manualmente (non per tasso)
+    let locked = {
+      finalPlus: false,
+      finalMinus: false
+    };
+
+    /**
+     * La funzione recalc() esegue i calcoli dinamicamente.
+     *
+     * Modalità:
+     *  • Se "Valore iniziale" e "%" sono forniti:
+     *      - Differenza = iniziale * (%/100)
+     *      - Valore Finale + = iniziale + Differenza
+     *      - Valore Finale - = iniziale - Differenza
+     *
+     *  • Se "Valore iniziale" e "Valore Finale +" sono forniti:
+     *      - % = ((Valore Finale + - iniziale) / iniziale) * 100
+     *      - Differenza = iniziale * (%/100)
+     *      - Il campo "Valore Finale -" viene lasciato vuoto.
+     *
+     *  • Se "Valore iniziale" e "Valore Finale -" sono forniti:
+     *      - % = ((iniziale - Valore Finale -) / iniziale) * 100
+     *      - Differenza = iniziale * (%/100)
+     *      - Il campo "Valore Finale +" viene lasciato vuoto.
+     */
+    function recalc() {
+      if (isUpdating) return;
+      isUpdating = true;
+      
+      // Legge il Valore Iniziale
+      const inizialeInput = document.getElementById('iniziale');
+      let iniziale = parseFloat(inizialeInput.value);
+      if (isNaN(iniziale)) {
+        // Se il campo iniziale non è valido, puliamo gli altri campi
+        document.getElementById('tasso').value = "";
+        document.getElementById('valorePerc').value = "";
+        document.getElementById('finalPlus').value = "";
+        document.getElementById('finalMinus').value = "";
+        isUpdating = false;
+        return;
+      }
+      
+      // Riferimenti ai campi opzionali
+      const tassoInput = document.getElementById('tasso');
+      const finalPlusInput = document.getElementById('finalPlus');
+      const finalMinusInput = document.getElementById('finalMinus');
+      const valorePercInput = document.getElementById('valorePerc');
+      
+      let tassoStr = tassoInput.value;
+      let finalPlusStr = finalPlusInput.value;
+      let finalMinusStr = finalMinusInput.value;
+      
+      let tassoVal = parseFloat(tassoStr);
+      let finalPlusVal = parseFloat(finalPlusStr);
+      let finalMinusVal = parseFloat(finalMinusStr);
+      
+      // Verifica se ciascun campo contiene un numero valido
+      let hasTasso = tassoStr.trim() !== "" && !isNaN(tassoVal);
+      let hasFinalPlus = finalPlusStr.trim() !== "" && !isNaN(finalPlusVal);
+      let hasFinalMinus = finalMinusStr.trim() !== "" && !isNaN(finalMinusVal);
+      
+      // Determina quale campo opzionale è l'input "fonte"
+      let candidate = [];
+      if (hasTasso) candidate.push({ field: "tasso", time: lastModified["tasso"] });
+      if (hasFinalPlus) candidate.push({ field: "finalPlus", time: lastModified["finalPlus"] });
+      if (hasFinalMinus) candidate.push({ field: "finalMinus", time: lastModified["finalMinus"] });
+      
+      if (candidate.length === 0) {
+        tassoInput.value = "";
+        valorePercInput.value = "";
+        if (!locked.finalPlus) finalPlusInput.value = "";
+        if (!locked.finalMinus) finalMinusInput.value = "";
+        isUpdating = false;
+        return;
+      }
+      
+      // Scegli il campo con l'ultimo aggiornamento
+      candidate.sort((a, b) => b.time - a.time);
+      let source = candidate[0].field;
+      
+      let computedT, computedValPerc, computedFinalPlus, computedFinalMinus;
+      
+      if (source === "tasso") {
+        computedT = tassoVal;
+        computedValPerc = round2(iniziale * computedT / 100);
+        computedFinalPlus = round2(iniziale + computedValPerc);
+        computedFinalMinus = round2(iniziale - computedValPerc);
+        valorePercInput.value = computedValPerc;
+        finalPlusInput.value = locked.finalPlus ? "" : computedFinalPlus;
+        finalMinusInput.value = locked.finalMinus ? "" : computedFinalMinus;
+      } else if (source === "finalPlus") {
+        computedT = ((finalPlusVal - iniziale) / iniziale) * 100;
+        computedT = round2(computedT);
+        computedValPerc = round2(iniziale * computedT / 100);
+        tassoInput.value = computedT;
+        valorePercInput.value = computedValPerc;
+        finalMinusInput.value = "";
+      } else if (source === "finalMinus") {
+        computedT = ((iniziale - finalMinusVal) / iniziale) * 100;
+        computedT = round2(computedT);
+        computedValPerc = round2(iniziale * computedT / 100);
+        tassoInput.value = computedT;
+        valorePercInput.value = computedValPerc;
+        finalPlusInput.value = "";
+      }
+      
+      isUpdating = false;
+    }
+    
+    // Eventi per aggiornare i calcoli in tempo reale
+    document.getElementById('iniziale').addEventListener('input', recalc);
+    
+    // Per il campo "%" non utilizziamo il meccanismo di lock
+    document.getElementById('tasso').addEventListener('input', function() {
+      lastModified["tasso"] = Date.now();
+      recalc();
+    });
+    
+    document.getElementById('finalPlus').addEventListener('input', function() {
+      if (this.value.trim() === "") {
+        locked.finalPlus = true;
+      } else {
+        locked.finalPlus = false;
+        lastModified["finalPlus"] = Date.now();
+      }
+      recalc();
+    });
+    
+    document.getElementById('finalMinus').addEventListener('input', function() {
+      if (this.value.trim() === "") {
+        locked.finalMinus = true;
+      } else {
+        locked.finalMinus = false;
+        lastModified["finalMinus"] = Date.now();
+      }
+      recalc();
+    });
+    
+    // Bottoni "cancella" accanto a ciascun campo
+    document.querySelectorAll('button.clear').forEach(button => {
+      button.addEventListener('click', function() {
+        const targetId = this.getAttribute('data-target');
+        const targetInput = document.getElementById(targetId);
+        targetInput.value = "";
+        targetInput.focus();
+        if (lastModified.hasOwnProperty(targetId)) {
+          lastModified[targetId] = 0;
+        }
+        // Per i campi finali, impostiamo il lock
+        if (targetId === "finalPlus" || targetId === "finalMinus") {
+          locked[targetId] = true;
+        }
+        recalc();
+      });
+    });
+    
+    // Bottoni "copia": al click, copia il testo e schiarisce il background della pagina
+    document.querySelectorAll('button.copy').forEach(button => {
+      button.addEventListener('click', function() {
+        const targetId = this.getAttribute('data-target');
+        const targetInput = document.getElementById(targetId);
+        if (targetInput.value.trim() !== "") {
+          navigator.clipboard.writeText(targetInput.value).then(() => {
+            document.body.classList.add('blink-page');
+            setTimeout(() => {
+              document.body.classList.remove('blink-page');
+            }, 750);
+          }).catch(err => {
+            console.error('Errore nella copia: ', err);
+          });
+        }
+      });
+    });
+    
+    // Tasto "Reset" (Cancella Tutto)
+    document.getElementById('clearAllBtn').addEventListener('click', function() {
+      document.getElementById('iniziale').value = "";
+      document.getElementById('tasso').value = "";
+      document.getElementById('valorePerc').value = "";
+      document.getElementById('finalPlus').value = "";
+      document.getElementById('finalMinus').value = "";
+      lastModified.tasso = 0;
+      lastModified.finalPlus = 0;
+      lastModified.finalMinus = 0;
+      locked.finalPlus = false;
+      locked.finalMinus = false;
+      recalc();
+    });
+    
+    // Tasto "Incolla": incolla nel campo attivo oppure in "Valore iniziale" se nessun campo è attivo
+    document.getElementById('pasteBtn').addEventListener('click', function() {
+      navigator.clipboard.readText().then(text => {
+        let active = document.activeElement;
+        if(active && active.tagName === "INPUT") {
+          active.value = text;
+          active.classList.add('blink');
+          setTimeout(() => {
+            active.classList.remove('blink');
+          }, 750);
+        } else {
+          const inizialeInput = document.getElementById('iniziale');
+          inizialeInput.value = text;
+          inizialeInput.classList.add('blink');
+          setTimeout(() => {
+            inizialeInput.classList.remove('blink');
+          }, 750);
+        }
+        recalc();
+      }).catch(err => {
+        console.error('Errore durante l\'incolla: ', err);
+      });
+    });
+  </script>
+</body>
+</html>
+

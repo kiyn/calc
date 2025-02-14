@@ -1,0 +1,203 @@
+﻿<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Esercizio Moltiplicazioni</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+    }
+    #question {
+      font-size: 24px;
+      margin: 20px 0;
+      padding: 10px;
+      background: #f0f0f0;
+    }
+    #stats {
+      margin: 20px 0;
+      padding: 15px;
+      background: #f8f8f8;
+      border-radius: 5px;
+    }
+    #recent-errors {
+      color: #cc0000;
+      margin-top: 30px;
+    }
+    .error { color: #ff0000; }
+    .warning { color: #ff9900; }
+    .success { color: #009900; }
+    input {
+      font-size: 20px;
+      width: 150px;
+      padding: 5px;
+    }
+    button {
+      font-size: 18px;
+      padding: 5px 15px;
+      margin-left: 10px;
+    }
+    /* Responsive per smartphone */
+    @media (max-width: 600px) {
+      body {
+        margin: 10px;
+        padding: 10px;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 10px;
+      }
+      button {
+        margin: 5px 0;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="question"></div>
+  <input type="text" id="answer" placeholder="Scrivi qui...">
+  <button onclick="checkAnswer()">Invia</button>
+  
+  <div id="stats">
+    <h3>Statistiche:</h3>
+    <p>Errori/Domande: <span id="error-count">0</span>/<span id="total-questions">0</span></p>
+    <p>Percentuale corrette: <span id="accuracy">100</span>%</p>
+    <p>Tempo medio: <span id="average-time">0</span>s</p>
+  </div>
+
+  <div id="recent-errors">
+    <h3>Errori Recenti:</h3>
+    <ul id="errors-list"></ul>
+    <button onclick="resetLog()">Reset Log</button>
+    <button onclick="saveLogToFile()">Salva Log</button>
+    <button onclick="deleteCookies()">Elimina Cookies</button>
+  </div>
+
+  <script>
+    let errorCount = 0;
+    let totalQuestions = 0;
+    let responseTimes = [];
+    let currentQuestion = {};
+    let startTime;
+
+    function generateQuestion() {
+      currentQuestion = {
+        num1: Math.floor(Math.random() * 6) + 4,
+        num2: Math.floor(Math.random() * 6) + 4
+      };
+      currentQuestion.result = currentQuestion.num1 * currentQuestion.num2;
+      
+      document.getElementById('question').textContent = 
+        `${currentQuestion.num1} × ${currentQuestion.num2} = ?`;
+      
+      startTime = Date.now();
+      totalQuestions++;
+    }
+
+    function updateStats() {
+      document.getElementById('error-count').textContent = errorCount;
+      document.getElementById('total-questions').textContent = totalQuestions;
+      
+      const accuracy = totalQuestions > 0 ? 
+        (((totalQuestions - errorCount) / totalQuestions) * 100).toFixed(1) : 100;
+      document.getElementById('accuracy').textContent = accuracy;
+      
+      const avgTime = responseTimes.length > 0 ? 
+        (responseTimes.reduce((a, b) => a + b) / responseTimes.length).toFixed(1) : 0;
+      document.getElementById('average-time').textContent = avgTime;
+    }
+
+    function saveError(error) {
+      const errors = JSON.parse(localStorage.getItem('mathErrors') || '[]');
+      errors.unshift(error);
+      localStorage.setItem('mathErrors', JSON.stringify(errors.slice(0, 20)));
+      showRecentErrors();
+    }
+
+    function showRecentErrors() {
+      const errors = JSON.parse(localStorage.getItem('mathErrors') || '[]');
+      const list = document.getElementById('errors-list');
+      list.innerHTML = errors.map(e => `<li>${e}</li>`).join('');
+    }
+
+    function resetLog() {
+      localStorage.removeItem('mathErrors');
+      showRecentErrors();
+    }
+
+    function saveLogToFile() {
+      const errors = JSON.parse(localStorage.getItem('mathErrors') || '[]');
+      if(errors.length === 0) {
+        return;
+      }
+      const logContent = errors.join("\n");
+      const blob = new Blob([logContent], { type: 'text/plain' });
+      const now = new Date();
+      const formattedTimestamp = 
+        now.getFullYear() + '-' +
+        ('0' + (now.getMonth() + 1)).slice(-2) + '-' +
+        ('0' + now.getDate()).slice(-2) + '_' +
+        ('0' + now.getHours()).slice(-2) + '_' +
+        ('0' + now.getMinutes()).slice(-2);
+      const filename = `${formattedTimestamp} Errori moltiplicazioni.txt`;
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function deleteCookies() {
+      document.cookie.split(";").forEach(function(c) {
+        document.cookie = c.trim().split("=")[0] +
+          '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      });
+      console.log("Cookies eliminati.");
+    }
+
+    function checkAnswer() {
+      const userAnswer = document.getElementById('answer').value.trim();
+      document.getElementById('answer').value = '';
+      const responseTime = (Date.now() - startTime) / 1000;
+      responseTimes.push(responseTime);
+      
+      if(userAnswer === '') {
+        errorCount++;
+        saveError(`${currentQuestion.num1}×${currentQuestion.num2} = ${currentQuestion.result}  (nessuna risposta)`);
+        updateStats();
+        generateQuestion();
+        return;
+      }
+
+      if(isNaN(userAnswer)) {
+        totalQuestions--;
+        updateStats();
+        return;
+      }
+
+      if(parseInt(userAnswer) !== currentQuestion.result) {
+        errorCount++;
+        saveError(`${currentQuestion.num1}×${currentQuestion.num2} = ${currentQuestion.result}  (hai risposto ${userAnswer})`);
+      }
+
+      updateStats();
+      generateQuestion();
+    }
+
+    window.onload = function() {
+      generateQuestion();
+      showRecentErrors();
+      document.getElementById('answer').addEventListener('keypress', function(e) {
+        if(e.key === 'Enter') checkAnswer();
+      });
+      document.getElementById('answer').focus();
+    };
+  </script>
+</body>
+</html>
