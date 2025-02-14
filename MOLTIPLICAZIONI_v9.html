@@ -1,0 +1,381 @@
+﻿<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moltiplicazioni</title>
+  <style>
+    /* Stili generali per il body in Dark (predefinito) */
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #222; /* Sfondo scuro */
+      color: #eee;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    /* Tema Light: override per background e colore testo */
+    .light-theme {
+      background-color: #fff;
+      color: #000;
+    }
+    /* Stile per la visualizzazione della domanda */
+    #question {
+      font-size: 24px;
+      margin: 20px 0;
+      padding: 10px;
+      background: #444;
+      transition: background 0.3s;
+    }
+    .light-theme #question {
+      background: #f0f0f0;
+    }
+    /* Box delle statistiche */
+    #stats {
+      margin: 20px 0;
+      padding: 15px;
+      background: #333;
+      border-radius: 5px;
+      transition: background 0.3s;
+    }
+    .light-theme #stats {
+      background: #f8f8f8;
+    }
+    /* Sezione per gli errori recenti */
+    #recent-errors {
+      color: #cc0000;
+      margin-top: 30px;
+    }
+    .error { color: #ff0000; }
+    .warning { color: #ff9900; }
+    .success { color: #009900; }
+    
+    /* Stile per il campo input in Dark */
+    input {
+      font-size: 20px;
+      width: 150px;
+      padding: 5px;
+      background-color: #333;  /* Sfondo scuro */
+      color: #eee;             /* Testo chiaro */
+      border: 1px solid #444;
+      transition: background-color 0.3s, color 0.3s, border 0.3s;
+    }
+    /* Override per il campo input in tema Light */
+    .light-theme input {
+      background-color: #fff;
+      color: #000;
+      border: 1px solid #ccc;
+    }
+    
+    /* Stile generico per i pulsanti */
+    button {
+      font-size: 18px;
+      font-weight: 900;
+	  padding: 5px 15px;
+      margin-left: 10px;
+      cursor: pointer;
+      border: none;
+      border-radius: 3px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    
+    /* Bottone per il cambio tema in Dark (predefinito) */
+    #theme-toggle {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      padding: 5px 10px;
+      font-size: 16px;
+      background-color: #555;
+      color: #fff;
+    }
+    /* In tema Light il bottone per il cambio tema (che ora mostra "Tema Dark") viene reso di colore scuro */
+    .light-theme #theme-toggle {
+      background-color: #333;
+      color: #fff;
+    }
+    
+    /* Tastiera numerica personalizzata */
+    #custom-keyboard {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .keyboard-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+    }
+    .placeholder {
+      visibility: hidden;
+    }
+    .small-keys-container {
+      display: flex;
+      gap: 5px;
+    }
+    .small-keys-container .key {
+      flex: 1;
+      padding: 5px;
+      font-size: 10px;
+      cursor: pointer;
+    }
+    /* Stile per i tasti della tastiera in Dark */
+    .key {
+      padding: 10px;
+      font-size: 20px;
+      cursor: pointer;
+      background-color: #444; /* Sfondo scuro */
+      color: #eee;            /* Testo chiaro */
+      border: none;
+      border-radius: 3px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    /* Override per i tasti in tema Light */
+    .light-theme .key {
+      background-color: #f0f0f0;
+      color: #000;
+    }
+    /* Tasto Enter (rappresentato da "↵") */
+    .enter-key { }
+    
+    /* Regole responsive per dispositivi con schermi piccoli */
+    @media (max-width: 600px) {
+      body {
+        margin: 10px;
+        padding: 10px;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 10px;
+      }
+      button {
+        margin: 5px 0;
+        width: 100%;
+      }
+    }
+  </style>
+  <!-- Favicon per dispositivi Apple e altri -->
+  <link rel="apple-touch-icon" href="https://www.iconarchive.com/download/i3927/bad-blood/yolks-2/X3.128.png">
+  <link rel="icon" href="https://www.iconarchive.com/download/i3927/bad-blood/yolks-2/X3.48.png" type="image/png">
+</head>
+<body>
+  <!-- Bottone per il cambio tema -->
+  <button id="theme-toggle">Tema Light</button>
+  
+  <!-- Visualizzazione della domanda -->
+  <div id="question"></div>
+  <!-- Campo di input per la risposta (sola lettura su smartphone; su desktop diventa editabile) -->
+  <input type="text" id="answer" placeholder="Scrivi qui..." readonly>
+  
+  <!-- Tastiera numerica personalizzata -->
+  <div id="custom-keyboard">
+    <!-- Riga 1: tasti 1, 2, 3 e una cella placeholder -->
+    <div class="keyboard-row">
+      <button class="key" data-value="1">1</button>
+      <button class="key" data-value="2">2</button>
+      <button class="key" data-value="3">3</button>
+      <div class="placeholder"></div>
+    </div>
+    <!-- Riga 2: tasti 4, 5, 6 e placeholder -->
+    <div class="keyboard-row">
+      <button class="key" data-value="4">4</button>
+      <button class="key" data-value="5">5</button>
+      <button class="key" data-value="6">6</button>
+      <div class="placeholder"></div>
+    </div>
+    <!-- Riga 3: tasti 7, 8, 9 e placeholder -->
+    <div class="keyboard-row">
+      <button class="key" data-value="7">7</button>
+      <button class="key" data-value="8">8</button>
+      <button class="key" data-value="9">9</button>
+      <div class="placeholder"></div>
+    </div>
+    <!-- Riga 4: tasti piccoli per "," e ".", tasto 0, tasto Enter e placeholder -->
+    <div class="keyboard-row last-row">
+      <div class="small-keys-container">
+        <button class="key small-key" data-value=",">,</button>
+        <button class="key small-key" data-value=".">.</button>
+      </div>
+      <button class="key" data-value="0">0</button>
+      <button class="key enter-key">↵</button>
+      <div class="placeholder"></div>
+    </div>
+  </div>
+  
+  <!-- Sezione statistiche -->
+  <div id="stats">
+    <h3>Statistiche:</h3>
+    <p>Errori/Domande: <span id="error-count">0</span>/<span id="total-questions">0</span></p>
+    <p>Percentuale corrette: <span id="accuracy">100</span>%</p>
+    <p>Tempo medio: <span id="average-time">0</span>s</p>
+  </div>
+
+  <!-- Sezione errori recenti -->
+  <div id="recent-errors">
+    <h3>Errori Recenti:</h3>
+    <ul id="errors-list"></ul>
+    <button onclick="resetLog()">Reset Log</button>
+    <button onclick="saveLogToFile()">Salva Log</button>
+  </div>
+
+  <script>
+    // Variabili globali per gestire lo stato del gioco
+    let errorCount = 0;           // Numero di risposte errate
+    let totalQuestions = 0;       // Numero totale di domande
+    let responseTimes = [];       // Array per i tempi di risposta
+    let currentQuestion = {};     // Oggetto per la domanda corrente
+    let startTime;                // Tempo in cui la domanda viene mostrata
+
+    // Funzione per generare una nuova domanda di moltiplicazione
+    function generateQuestion() {
+      currentQuestion = {
+        num1: Math.floor(Math.random() * 6) + 4,
+        num2: Math.floor(Math.random() * 6) + 4
+      };
+      currentQuestion.result = currentQuestion.num1 * currentQuestion.num2;
+      document.getElementById('question').textContent = 
+        `${currentQuestion.num1} × ${currentQuestion.num2} = ?`;
+      startTime = Date.now();
+      totalQuestions++;
+    }
+
+    // Funzione per aggiornare le statistiche visualizzate
+    function updateStats() {
+      document.getElementById('error-count').textContent = errorCount;
+      document.getElementById('total-questions').textContent = totalQuestions;
+      const accuracy = totalQuestions > 0 ? 
+        (((totalQuestions - errorCount) / totalQuestions) * 100).toFixed(1) : 100;
+      document.getElementById('accuracy').textContent = accuracy;
+      const avgTime = responseTimes.length > 0 ? 
+        (responseTimes.reduce((a, b) => a + b) / responseTimes.length).toFixed(1) : 0;
+      document.getElementById('average-time').textContent = avgTime;
+    }
+
+    // Funzione per salvare un errore nel log (localStorage)
+    function saveError(error) {
+      const errors = JSON.parse(localStorage.getItem('mathErrors') || '[]');
+      errors.unshift(error);
+      localStorage.setItem('mathErrors', JSON.stringify(errors.slice(0, 20)));
+      showRecentErrors();
+    }
+
+    // Mostra la lista degli errori recenti
+    function showRecentErrors() {
+      const errors = JSON.parse(localStorage.getItem('mathErrors') || '[]');
+      const list = document.getElementById('errors-list');
+      list.innerHTML = errors.map(e => `<li>${e}</li>`).join('');
+    }
+
+    // Resetta il log degli errori
+    function resetLog() {
+      localStorage.removeItem('mathErrors');
+      showRecentErrors();
+    }
+
+    // Salva il log degli errori in un file di testo scaricabile
+    function saveLogToFile() {
+      const errors = JSON.parse(localStorage.getItem('mathErrors') || '[]');
+      if(errors.length === 0) {
+        return;
+      }
+      const logContent = errors.join("\n");
+      const blob = new Blob([logContent], { type: 'text/plain' });
+      const now = new Date();
+      const formattedTimestamp = 
+        now.getFullYear() + '-' +
+        ('0' + (now.getMonth() + 1)).slice(-2) + '-' +
+        ('0' + now.getDate()).slice(-2) + '_' +
+        ('0' + now.getHours()).slice(-2) + '_' +
+        ('0' + now.getMinutes()).slice(-2);
+      const filename = `${formattedTimestamp} Errori moltiplicazioni.txt`;
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // Funzione per verificare la risposta dell'utente
+    function checkAnswer() {
+      const answerField = document.getElementById('answer');
+      const userAnswer = answerField.value.trim();
+      answerField.value = '';
+      const responseTime = (Date.now() - startTime) / 1000;
+      responseTimes.push(responseTime);
+      
+      if(userAnswer === '') {
+        errorCount++;
+        saveError(`${currentQuestion.num1}×${currentQuestion.num2} = ${currentQuestion.result}  (nessuna risposta)`);
+        updateStats();
+        generateQuestion();
+        answerField.focus();
+        return;
+      }
+
+      if(isNaN(userAnswer)) {
+        totalQuestions--;
+        updateStats();
+        answerField.focus();
+        return;
+      }
+
+      if(parseInt(userAnswer) !== currentQuestion.result) {
+        errorCount++;
+        saveError(`${currentQuestion.num1}×${currentQuestion.num2} = ${currentQuestion.result}  (hai risposto ${userAnswer})`);
+      }
+
+      updateStats();
+      generateQuestion();
+      answerField.focus();
+    }
+
+    // Funzione eseguita al caricamento della pagina
+    window.onload = function() {
+      generateQuestion();
+      showRecentErrors();
+      document.getElementById('answer').focus();
+
+      // Gestione del cambio tema
+      const themeToggle = document.getElementById('theme-toggle');
+      themeToggle.addEventListener('click', function() {
+        if(document.body.classList.contains('light-theme')) {
+          document.body.classList.remove('light-theme');
+          themeToggle.textContent = 'Tema Light';
+        } else {
+          document.body.classList.add('light-theme');
+          themeToggle.textContent = 'Tema Dark';
+        }
+      });
+
+      // Se il dispositivo non supporta il touch, abilita l'input tramite tastiera fisica
+      if (!("ontouchstart" in window)) {
+        const answerField = document.getElementById('answer');
+        answerField.removeAttribute('readonly');
+        answerField.addEventListener('keypress', function(e) {
+          if(e.key === 'Enter') {
+            checkAnswer();
+          }
+        });
+      }
+
+      // Gestione degli eventi per la tastiera personalizzata
+      document.querySelectorAll('#custom-keyboard .key').forEach(button => {
+        button.addEventListener('click', function() {
+          const answerField = document.getElementById('answer');
+          if(this.classList.contains('enter-key')) {
+            checkAnswer();
+          } else {
+            answerField.value += this.getAttribute('data-value');
+          }
+          answerField.focus();
+        });
+      });
+    };
+  </script>
+</body>
+</html>

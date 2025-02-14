@@ -22,7 +22,7 @@
       font-size: 24px;
       margin: 20px 0;
       padding: 10px;
-      background: #444; /* Dark */
+      background: #444;
       transition: background 0.3s;
     }
     .light-theme #question {
@@ -31,7 +31,7 @@
     #stats {
       margin: 20px 0;
       padding: 15px;
-      background: #333; /* Dark */
+      background: #333;
       border-radius: 5px;
       transition: background 0.3s;
     }
@@ -55,7 +55,7 @@
       padding: 5px 15px;
       margin-left: 10px;
     }
-    /* Responsive per smartphone */
+    /* Responsive */
     @media (max-width: 600px) {
       body {
         margin: 10px;
@@ -80,8 +80,43 @@
       padding: 5px 10px;
       font-size: 16px;
     }
+    /* Tastiera personalizzata */
+    #custom-keyboard {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .keyboard-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+    }
+    /* Le prime tre righe hanno 3 tasti e una cella placeholder */
+    .placeholder {
+      visibility: hidden;
+    }
+    /* Ultima riga: la prima cella contiene i tasti piccoli per "," e "." */
+    .small-keys-container {
+      display: flex;
+      gap: 5px;
+    }
+    .small-keys-container .key {
+      flex: 1;
+      padding: 5px;
+      font-size: 10px;
+      cursor: pointer;
+    }
+    /* Tasti normali */
+    .key {
+      padding: 10px;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    /* Il tasto Enter con il carattere Unicode "⏎" */
+    .enter-key { }
   </style>
-  <!-- Favicon in formato PNG reperite dal web -->
+  <!-- Favicon -->
   <link rel="apple-touch-icon" href="https://www.iconarchive.com/download/i3927/bad-blood/yolks-2/X3.128.png">
   <link rel="icon" href="https://www.iconarchive.com/download/i3927/bad-blood/yolks-2/X3.48.png" type="image/png">
 </head>
@@ -90,9 +125,44 @@
   <button id="theme-toggle">Tema Light</button>
   
   <div id="question"></div>
-  <!-- Input di tipo number con inputmode per tastiera numerica -->
-  <input type="number" id="answer" placeholder="Scrivi qui..." inputmode="numeric">
+  <!-- L'input rimane in sola lettura per smartphone; su desktop verrà reso editabile -->
+  <input type="text" id="answer" placeholder="Scrivi qui..." readonly>
   <button onclick="checkAnswer()">Invia</button>
+  
+  <!-- Tastiera numerica personalizzata -->
+  <div id="custom-keyboard">
+    <!-- Riga 1 -->
+    <div class="keyboard-row">
+      <button class="key" data-value="1">1</button>
+      <button class="key" data-value="2">2</button>
+      <button class="key" data-value="3">3</button>
+      <div class="placeholder"></div>
+    </div>
+    <!-- Riga 2 -->
+    <div class="keyboard-row">
+      <button class="key" data-value="4">4</button>
+      <button class="key" data-value="5">5</button>
+      <button class="key" data-value="6">6</button>
+      <div class="placeholder"></div>
+    </div>
+    <!-- Riga 3 -->
+    <div class="keyboard-row">
+      <button class="key" data-value="7">7</button>
+      <button class="key" data-value="8">8</button>
+      <button class="key" data-value="9">9</button>
+      <div class="placeholder"></div>
+    </div>
+    <!-- Riga 4: la prima cella contiene i tasti piccoli per "," e ".", poi tasto 0, tasto Enter e placeholder -->
+    <div class="keyboard-row last-row">
+      <div class="small-keys-container">
+        <button class="key small-key" data-value=",">,</button>
+        <button class="key small-key" data-value=".">.</button>
+      </div>
+      <button class="key" data-value="0">0</button>
+      <button class="key enter-key">⏎</button>
+      <div class="placeholder"></div>
+    </div>
+  </div>
   
   <div id="stats">
     <h3>Statistiche:</h3>
@@ -219,12 +289,9 @@
     window.onload = function() {
       generateQuestion();
       showRecentErrors();
-      document.getElementById('answer').addEventListener('keypress', function(e) {
-        if(e.key === 'Enter') checkAnswer();
-      });
       document.getElementById('answer').focus();
 
-      // Logica per il cambio tema
+      // Gestione del cambio tema
       const themeToggle = document.getElementById('theme-toggle');
       themeToggle.addEventListener('click', function() {
         if(document.body.classList.contains('light-theme')) {
@@ -234,6 +301,30 @@
           document.body.classList.add('light-theme');
           themeToggle.textContent = 'Tema Dark';
         }
+      });
+
+      // Se non è presente un touch screen (desktop) rimuoviamo l'attributo readonly e abilitiamo l'input da tastiera
+      if (!("ontouchstart" in window)) {
+        const answerField = document.getElementById('answer');
+        answerField.removeAttribute('readonly');
+        answerField.addEventListener('keypress', function(e) {
+          if(e.key === 'Enter') {
+            checkAnswer();
+          }
+        });
+      }
+
+      // Gestione della tastiera personalizzata
+      document.querySelectorAll('#custom-keyboard .key').forEach(button => {
+        button.addEventListener('click', function() {
+          const answerField = document.getElementById('answer');
+          if(this.classList.contains('enter-key')) {
+            checkAnswer();
+          } else {
+            answerField.value += this.getAttribute('data-value');
+          }
+          answerField.focus();
+        });
       });
     };
   </script>
