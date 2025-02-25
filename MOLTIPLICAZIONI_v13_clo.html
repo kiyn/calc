@@ -132,14 +132,14 @@
       cursor: pointer;
       background-color: #444;
       color: #eee;
-      border: 2px solid #888;
-      border-radius: 3px;
+      border: 2px solid #aaa; /* Bordo più chiaro */
+      border-radius: 12px; /* Bordi più stondati */
       transition: background-color 0.3s, color 0.3s;
     }
     .light-theme button.key, .light-theme button {
       background-color: #f0f0f0;
       color: #000;
-      border: 2px solid #999;
+      border: 2px solid #ccc; /* Bordo più chiaro per il tema light */
     }
     
     /* Tastiera numerica personalizzata */
@@ -156,20 +156,13 @@
       gap: 5px;
       width: 100%;
     }
-    .last-row {
+    .small-keys-container {
+      grid-column: span 1;
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: 0.8fr 1.2fr;
       gap: 5px;
     }
-    .small-keys-container {
-      display: grid;
-      grid-template-columns: 2fr 3fr 1fr;
-      gap: 2px;
-    }
-    .comma-key {
-      width: 100%;
-    }
-    .backspace-key {
+    .comma-key, .backspace-key {
       width: 100%;
     }
     .action-row {
