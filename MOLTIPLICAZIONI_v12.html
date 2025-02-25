@@ -110,6 +110,14 @@
       color: #cc0000;
       margin-top: 30px;
     }
+    #recent-errors h3 {
+      margin: 0 0 5px 0;
+    }
+    #errors-list {
+      margin: 0 0 10px 0;
+      padding: 0;
+      list-style: none;
+    }
     .error { color: #ff0000; }
     .warning { color: #ff9900; }
     .success { color: #009900; }
@@ -121,14 +129,14 @@
       cursor: pointer;
       background-color: #444;
       color: #eee;
-      border: 1px solid #666;
+      border: 2px solid #888;
       border-radius: 3px;
       transition: background-color 0.3s, color 0.3s;
     }
     .light-theme button.key, .light-theme button {
       background-color: #f0f0f0;
       color: #000;
-      border: 1px solid #ccc;
+      border: 2px solid #999;
     }
     
     /* Tastiera numerica personalizzata */
@@ -147,23 +155,24 @@
     }
     .last-row {
       display: grid;
-      grid-template-columns: 3fr 1fr;
+      grid-template-columns: repeat(3, 1fr);
       gap: 5px;
     }
     .small-keys-container {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 5px;
+      grid-template-columns: auto auto 1fr;
+      gap: 2px;
     }
     .comma-key {
       max-width: 50%;
-      justify-self: start;
     }
     .action-row {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 5px;
-      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      margin-top: 5px;
+    }
+    .action-row button {
+      flex: 1;
     }
     
     /* Regole responsive per dispositivi con schermi piccoli */
@@ -220,15 +229,18 @@
   <!-- Sezione statistiche -->
   <div id="stats">
     <h3>Statistiche:</h3>
-    <p>Errori/Domande: <span id="error-count">0</span>/<span id="total-questions">0</span></p>
-    <p>Percentuale corrette: <span id="accuracy">100</span>%</p>
+    <p>Domande/Errori: <span id="total-questions">0</span>/<span id="error-count">0</span> (<span id="accuracy">100</span>%)</p>
     <p>Tempo medio: <span id="average-time">0</span>s</p>
   </div>
 
-  <!-- Sezione errori recenti -->
+  <!-- Sezione errori recenti e azioni -->
   <div id="recent-errors">
-    <h3>Errori Recenti:</h3>
-    <ul id="errors-list"></ul>
+    <h3>Ultimo errore:</h3>
+    <div id="errors-list"></div>
+    <div class="action-row">
+      <button onclick="resetLog()">Reset Log</button>
+      <button onclick="saveLogToFile()">Salva Log</button>
+    </div>
   </div>
 
   <!-- Sezione domanda con testo e riga di input + tema -->
@@ -261,18 +273,13 @@
       <button class="key" data-value="9">9</button>
     </div>
     <!-- Riga 4 -->
-    <div class="keyboard-row last-row">
+    <div class="keyboard-row">
       <div class="small-keys-container">
         <button class="key comma-key" data-value=",">,</button>
         <button onclick="deleteInput()" class="key">⌫</button>
-        <button class="key" data-value="0">0</button>
       </div>
+      <button class="key" data-value="0">0</button>
       <button class="key enter-key">↵</button>
-    </div>
-    <!-- Riga azioni -->
-    <div class="action-row">
-      <button onclick="resetLog()">Reset Log</button>
-      <button onclick="saveLogToFile()">Salva Log</button>
     </div>
   </div>
 
@@ -321,7 +328,7 @@
     function showRecentErrors() {
       const errors = JSON.parse(localStorage.getItem('mathErrors') || '[]');
       const list = document.getElementById('errors-list');
-      list.innerHTML = errors.map(e => `<li>${e}</li>`).join('');
+      list.innerHTML = errors.length > 0 ? errors[0] : '';
     }
 
     // Resetta il log degli errori
@@ -336,7 +343,8 @@
       if(errors.length === 0) {
         return;
       }
-      const logContent = errors.join("\n");
+      const stats = `Domande/Errori: ${totalQuestions}/${errorCount} (${document.getElementById('accuracy').textContent}%)\n\n`;
+      const logContent = stats + errors.join("\n");
       const blob = new Blob([logContent], { type: 'text/plain' });
       const now = new Date();
       const formattedTimestamp =
@@ -356,8 +364,10 @@
 
     // Cancella il contenuto del campo di input
     function deleteInput() {
-      document.getElementById('answer').value = '';
-      document.getElementById('answer').focus();
+      const answerField = document.getElementById('answer');
+      answerField.value = '';
+      answerField.placeholder = '?';
+      answerField.focus();
     }
 
     // Verifica la risposta dell'utente
@@ -365,6 +375,7 @@
       const answerField = document.getElementById('answer');
       const userAnswer = answerField.value.trim();
       answerField.value = '';
+      answerField.placeholder = '?';
       const responseTime = (Date.now() - startTime) / 1000;
       responseTimes.push(responseTime);
 
