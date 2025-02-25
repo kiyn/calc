@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Snake Automatico</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         body {
             display: flex;
@@ -47,6 +48,42 @@
             text-shadow: 0 0 2px #888;
             font-weight: bold;
         }
+        .controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 4;
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: 2px solid #666;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: monospace;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            border-color: #888;
+            background: rgba(0, 0, 0, 0.9);
+        }
+        .btn.active {
+            border-color: #0f0;
+            color: #0f0;
+        }
+        #score {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 4;
+            color: #0f0;
+            font-family: monospace;
+            font-size: 24px;
+            text-shadow: 0 0 4px #0f0;
+        }
         .flash {
             position: fixed;
             top: 0;
@@ -61,6 +98,11 @@
     </style>
 </head>
 <body>
+    <div class="controls">
+        <button id="matrixBtn" class="btn active">Matrix</button>
+        <button id="playBtn" class="btn">Play</button>
+    </div>
+    <div id="score">Score: 0</div>
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
         <div id="matrixContainer"></div>
@@ -88,6 +130,72 @@
         let lastUpdateTime = 0;
         const updateInterval = 100; // Rallenta il serpente (millisecondi tra gli aggiornamenti)
         
+        let score = 0;
+        let isMatrixEnabled = true;
+        let isPlayerControlled = false;
+        let matrixInterval;
+
+        // Gestione pulsanti
+        const matrixBtn = document.getElementById('matrixBtn');
+        const playBtn = document.getElementById('playBtn');
+        const scoreElement = document.getElementById('score');
+
+        matrixBtn.addEventListener('click', () => {
+            isMatrixEnabled = !isMatrixEnabled;
+            matrixBtn.classList.toggle('active');
+            matrixContainer.style.display = isMatrixEnabled ? 'grid' : 'none';
+            if (isMatrixEnabled) {
+                updateMatrix();
+                matrixInterval = setInterval(updateMatrix, 500);
+            } else {
+                clearInterval(matrixInterval);
+            }
+        });
+
+        playBtn.addEventListener('click', () => {
+            isPlayerControlled = !isPlayerControlled;
+            playBtn.classList.toggle('active');
+            if (isPlayerControlled) {
+                if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    DeviceOrientationEvent.requestPermission()
+                        .then(permissionState => {
+                            if (permissionState === 'granted') {
+                                window.addEventListener('deviceorientation', handleOrientation);
+                            }
+                        })
+                        .catch(console.error);
+                } else {
+                    window.addEventListener('deviceorientation', handleOrientation);
+                }
+            } else {
+                window.removeEventListener('deviceorientation', handleOrientation);
+            }
+        });
+
+        // Gestione orientamento dispositivo
+        function handleOrientation(event) {
+            if (!isPlayerControlled) return;
+            
+            const beta = event.beta;  // Inclinazione frontale (-180 to 180)
+            const gamma = event.gamma; // Inclinazione laterale (-90 to 90)
+            
+            if (Math.abs(gamma) > Math.abs(beta)) {
+                // Movimento orizzontale
+                if (gamma > 10 && direction.x !== -1) {
+                    direction = { x: 1, y: 0 };
+                } else if (gamma < -10 && direction.x !== 1) {
+                    direction = { x: -1, y: 0 };
+                }
+            } else {
+                // Movimento verticale
+                if (beta > 10 && direction.y !== -1) {
+                    direction = { x: 0, y: 1 };
+                } else if (beta < -10 && direction.y !== 1) {
+                    direction = { x: 0, y: -1 };
+                }
+            }
+        }
+
         // Inizializza il serpente
         function initSnake() {
             snake = [];
@@ -217,7 +325,7 @@
             if(!food) createFood();
             
             const path = findPath();
-            if(path.length > 0) {
+            if(!isPlayerControlled && path.length > 0) {
                 direction = path[0];
             }
             
@@ -226,9 +334,19 @@
                 y: snake[0].y + direction.y
             };
             
+            // Controllo collisione con i bordi
+            if (isPlayerControlled) {
+                if (head.x < 0) head.x = cols - 1;
+                if (head.x >= cols) head.x = 0;
+                if (head.y < 0) head.y = rows - 1;
+                if (head.y >= rows) head.y = 0;
+            }
+            
             snake.unshift(head);
             
             if(head.x === food.x && head.y === food.y) {
+                score++;
+                scoreElement.textContent = `Score: ${score}`;
                 updateGradient(food.color);
                 createExplosion(food.x, food.y, food.color);
                 triggerFlash();
@@ -299,9 +417,6 @@
                 }, cellUpdateDelays[index] % 500); // Mantiene i ritardi entro il ciclo di 500ms
             });
         }
-
-        // Aggiorna la matrice ogni mezzo secondo
-        setInterval(updateMatrix, 500);
 
         // Loop principale del gioco modificato
         function gameLoop(currentTime) {
