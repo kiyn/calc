@@ -147,17 +147,21 @@
     }
     .last-row {
       display: grid;
-      grid-template-columns: 2fr 1fr;
+      grid-template-columns: 3fr 1fr;
       gap: 5px;
     }
     .small-keys-container {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 5px;
+    }
+    .comma-key {
+      max-width: 50%;
+      justify-self: start;
     }
     .action-row {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 5px;
       margin-top: 10px;
     }
@@ -213,15 +217,6 @@
   <link rel="icon" href="https://www.iconarchive.com/download/i3927/bad-blood/yolks-2/X3.48.png" type="image/png">
 </head>
 <body>
-  <!-- Sezione domanda con testo e riga di input + tema -->
-  <div id="question">
-    <div id="question-text-container">
-      <span id="question-text"></span>
-      <input type="text" id="answer" placeholder="?" readonly>
-      <button id="theme-toggle">☀</button>
-    </div>
-  </div>
-  
   <!-- Sezione statistiche -->
   <div id="stats">
     <h3>Statistiche:</h3>
@@ -236,6 +231,15 @@
     <ul id="errors-list"></ul>
   </div>
 
+  <!-- Sezione domanda con testo e riga di input + tema -->
+  <div id="question">
+    <div id="question-text-container">
+      <span id="question-text"></span>
+      <input type="text" id="answer" placeholder="?" readonly>
+      <button id="theme-toggle">☀</button>
+    </div>
+  </div>
+  
   <!-- Tastiera numerica personalizzata -->
   <div id="custom-keyboard">
     <!-- Riga 1 -->
@@ -259,17 +263,16 @@
     <!-- Riga 4 -->
     <div class="keyboard-row last-row">
       <div class="small-keys-container">
-        <button class="key" data-value=",">,</button>
-        <button class="key" data-value=".">.</button>
+        <button class="key comma-key" data-value=",">,</button>
+        <button onclick="deleteInput()" class="key">⌫</button>
         <button class="key" data-value="0">0</button>
-        <button class="key enter-key">↵</button>
       </div>
+      <button class="key enter-key">↵</button>
     </div>
     <!-- Riga azioni -->
     <div class="action-row">
       <button onclick="resetLog()">Reset Log</button>
       <button onclick="saveLogToFile()">Salva Log</button>
-      <button onclick="deleteInput()">DEL</button>
     </div>
   </div>
 
