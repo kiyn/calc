@@ -137,11 +137,19 @@
       display: flex;
       flex-direction: column;
       gap: 5px;
+      width: 100%;
     }
     .keyboard-row {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 5px;
+      width: 100%;
+    }
+    .action-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      margin-top: 10px;
     }
     .placeholder {
       visibility: hidden;
@@ -153,7 +161,7 @@
     .small-keys-container .key {
       flex: 1;
       padding: 5px;
-      font-size: 10px;
+      font-size: 16px;
       cursor: pointer;
     }
     /* Tasto Enter (rappresentato da "↵") */
@@ -198,14 +206,13 @@
         padding: 10px;
         border-radius: 8px;
       }
-      #log-buttons {
-        gap: 8px;
+      button.key {
+        padding: 20px;
+        font-size: 28px;
       }
-      #log-buttons button {
+      .action-row button {
         padding: 15px;
-        font-size: 16px;
-        border-radius: 8px;
-        min-height: 60px;
+        font-size: 20px;
       }
     }
     
@@ -244,31 +251,30 @@
       <button class="key" data-value="1">1</button>
       <button class="key" data-value="2">2</button>
       <button class="key" data-value="3">3</button>
-      <button onclick="resetLog()">Reset Log</button>
     </div>
     <!-- Riga 2 -->
     <div class="keyboard-row">
       <button class="key" data-value="4">4</button>
       <button class="key" data-value="5">5</button>
       <button class="key" data-value="6">6</button>
-      <button onclick="saveLogToFile()">Salva Log</button>
     </div>
     <!-- Riga 3 -->
     <div class="keyboard-row">
       <button class="key" data-value="7">7</button>
       <button class="key" data-value="8">8</button>
       <button class="key" data-value="9">9</button>
-      <button onclick="deleteInput()">DEL</button>
     </div>
     <!-- Riga 4 -->
-    <div class="keyboard-row last-row">
-      <div class="small-keys-container">
-        <button class="key small-key" data-value=",">,</button>
-        <button class="key small-key" data-value=".">.</button>
-      </div>
+    <div class="keyboard-row">
       <button class="key" data-value="0">0</button>
       <button class="key enter-key">↵</button>
       <div class="placeholder"></div>
+    </div>
+    <!-- Riga azioni -->
+    <div class="action-row">
+      <button onclick="resetLog()">Reset Log</button>
+      <button onclick="saveLogToFile()">Salva Log</button>
+      <button onclick="deleteInput()">DEL</button>
     </div>
   </div>
   
