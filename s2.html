@@ -6,6 +6,8 @@
     <style>
         :root {
             --accent-color: #a020f0;
+            --cols: 19;
+            --rows: 42;
         }
         body {
             display: flex;
@@ -45,19 +47,23 @@
             height: 100%;
             z-index: 1;
             display: grid;
-            grid-template-columns: repeat(13, 1fr);
-            grid-template-rows: repeat(30, 1fr);
+            grid-template-columns: repeat(var(--cols), 1fr);
+            grid-template-rows: repeat(var(--rows), 1fr);
             overflow: hidden;
+            padding: 2px 0 0 2px;
+            box-sizing: border-box;
         }
         .matrix-cell {
             display: flex;
             justify-content: center;
             align-items: center;
             font-family: monospace;
-            font-size: 14px;
+            font-size: 10px;
             color: #888;
             text-shadow: 0 0 2px #888;
             font-weight: bold;
+            width: calc(100% - 2px);
+            height: calc(100% - 2px);
         }
         .controls {
             position: fixed;
@@ -177,8 +183,13 @@
         
         // Imposta la griglia
         const gridSize = 14; // Ridotto da 20 per adattarsi meglio alla larghezza
-        const cols = Math.floor(GAME_WIDTH / gridSize);
-        const rows = Math.floor(GAME_HEIGHT / gridSize);
+        const cols = Math.floor(GAME_WIDTH / gridSize);  // Circa 19 colonne
+        const rows = Math.floor(GAME_HEIGHT / gridSize); // Circa 42 righe
+        
+        // Aggiorna lo stile del matrixContainer per allinearsi con la griglia del serpente
+        const matrixContainer = document.getElementById('matrixContainer');
+        matrixContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+        matrixContainer.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
         
         let snake = [];
         let food = null;
@@ -689,17 +700,29 @@
             });
         }
         
+        // Aggiorna le variabili CSS per la griglia
+        function updateGridVariables() {
+            document.documentElement.style.setProperty('--cols', cols);
+            document.documentElement.style.setProperty('--rows', rows);
+        }
+
         // Inizializza la matrice
-        const matrixContainer = document.getElementById('matrixContainer');
-        const matrixCols = 13;
-        const matrixRows = 30;
+        const matrixCols = cols;
+        const matrixRows = rows;
         const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         const matrixCells = [];
 
+        updateGridVariables(); // Aggiorna le variabili CSS iniziali
+
+        // Svuota il container della matrice
+        matrixContainer.innerHTML = '';
+        
+        // Ricrea la griglia della matrice con le nuove dimensioni
         for (let i = 0; i < matrixRows; i++) {
             for (let j = 0; j < matrixCols; j++) {
                 const cell = document.createElement('div');
                 cell.className = 'matrix-cell';
+                cell.style.fontSize = '10px';  // Riduce la dimensione del font per adattarsi alla griglia più fitta
                 matrixContainer.appendChild(cell);
                 matrixCells.push(cell);
             }
@@ -768,6 +791,17 @@
         // Inizializzazione per mobile
         if (isMobile) {
             resizeGame();
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            window.addEventListener('deviceorientation', handleOrientation);
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                window.addEventListener('deviceorientation', handleOrientation);
+            }
             if (screen.orientation && screen.orientation.lock) {
                 screen.orientation.lock('portrait')
                     .catch(console.error);
