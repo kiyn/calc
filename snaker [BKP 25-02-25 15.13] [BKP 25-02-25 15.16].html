@@ -2,8 +2,11 @@
 <html>
 <head>
     <title>Snake Automatico</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=portrait">
     <style>
+        :root {
+            --accent-color: #a020f0;
+        }
         body {
             display: flex;
             flex-direction: column;
@@ -18,6 +21,12 @@
             position: relative;
             width: 800px;
             height: 600px;
+        }
+        @media (max-width: 820px) {
+            #gameContainer {
+                width: 100vw;
+                height: 100vh;
+            }
         }
         #gameCanvas {
             position: absolute;
@@ -35,8 +44,6 @@
             height: 100%;
             z-index: 1;
             display: grid;
-            grid-template-columns: repeat(40, 1fr);
-            grid-template-rows: repeat(30, 1fr);
         }
         .matrix-cell {
             display: flex;
@@ -67,25 +74,22 @@
             transition: all 0.3s;
         }
         .btn:hover {
-            border-color: #888;
+            border-color: var(--accent-color);
             background: rgba(0, 0, 0, 0.9);
         }
         .btn.active {
-            border-color: #8a2be2;
-            color: #8a2be2;
+            border-color: var(--accent-color);
+            color: var(--accent-color);
         }
         #score {
             position: fixed;
             top: 20px;
             right: 20px;
             z-index: 4;
-            color: #8a2be2;
+            color: var(--accent-color);
             font-family: monospace;
             font-size: 24px;
-            text-shadow: 0 0 4px #8a2be2;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
+            text-shadow: 0 0 4px var(--accent-color);
         }
         .flash {
             position: fixed;
@@ -102,18 +106,10 @@
 </head>
 <body>
     <div class="controls">
-        <select id="matrixSelect" class="btn">
-            <option value="1">Matrix-1</option>
-            <option value="2">Matrix-2</option>
-            <option value="3">Matrix-3</option>
-            <option value="0">Matrix-OFF</option>
-        </select>
+        <button id="matrixBtn" class="btn active">Matrix</button>
         <button id="playBtn" class="btn">Play</button>
     </div>
-    <div id="score">
-        Score: 0
-        <span id="highScore">High: 0</span>
-    </div>
+    <div id="score">Score: 0</div>
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
         <div id="matrixContainer"></div>
@@ -145,38 +141,27 @@
         let isMatrixEnabled = true;
         let isPlayerControlled = false;
         let matrixInterval;
-        let highScore = 0;
-        let matrixMode = 1;
-        let isPaused = false;
-        let isTransforming = false;
-        let transformationTimeout = null;
-        const scoreElement = document.getElementById('score').firstChild;
-        const highScoreElement = document.getElementById('highScore');
-        const matrixSelect = document.getElementById('matrixSelect');
 
         // Gestione pulsanti
         const matrixBtn = document.getElementById('matrixBtn');
         const playBtn = document.getElementById('playBtn');
+        const scoreElement = document.getElementById('score');
 
-        matrixSelect.addEventListener('change', () => {
-            matrixMode = parseInt(matrixSelect.value);
-            if (matrixMode === 0) {
-                matrixContainer.style.display = 'none';
-                clearInterval(matrixInterval);
-            } else {
-                matrixContainer.style.display = 'grid';
-                clearInterval(matrixInterval);
+        matrixBtn.addEventListener('click', () => {
+            isMatrixEnabled = !isMatrixEnabled;
+            matrixBtn.classList.toggle('active');
+            matrixContainer.style.display = isMatrixEnabled ? 'grid' : 'none';
+            if (isMatrixEnabled) {
                 updateMatrix();
                 matrixInterval = setInterval(updateMatrix, 500);
+            } else {
+                clearInterval(matrixInterval);
             }
         });
 
         playBtn.addEventListener('click', () => {
             isPlayerControlled = !isPlayerControlled;
             playBtn.classList.toggle('active');
-            score = 0; // Resetta il punteggio quando si cambia modalità
-            updateScore(); // Aggiorna la visualizzazione del punteggio
-            
             if (isPlayerControlled) {
                 if (typeof DeviceOrientationEvent.requestPermission === 'function') {
                     DeviceOrientationEvent.requestPermission()
@@ -194,27 +179,107 @@
             }
         });
 
-        // Gestione orientamento dispositivo
+        // Rileva se è mobile
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+        // Adatta le dimensioni per mobile
+        function resizeGame() {
+            if (isMobile) {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                
+                // Ricalcola la griglia della matrice per mobile
+                const cellSize = Math.min(window.innerWidth, window.innerHeight) / 20;
+                const mobileCols = Math.floor(window.innerWidth / cellSize);
+                const mobileRows = Math.floor(window.innerHeight / cellSize);
+                
+                matrixContainer.style.gridTemplateColumns = `repeat(${mobileCols}, 1fr)`;
+                matrixContainer.style.gridTemplateRows = `repeat(${mobileRows}, 1fr)`;
+                
+                // Aggiorna le costanti del gioco
+                gridSize = cellSize;
+                cols = canvas.width / gridSize;
+                rows = canvas.height / gridSize;
+            }
+        }
+
+        // Gestione input da tastiera per desktop
+        if (!isMobile) {
+            window.addEventListener('keydown', (e) => {
+                if (!isPlayerControlled) return;
+                
+                switch(e.key) {
+                    case 'ArrowLeft':
+                        if (direction.x !== 1) direction = { x: -1, y: 0 };
+                        break;
+                    case 'ArrowRight':
+                        if (direction.x !== -1) direction = { x: 1, y: 0 };
+                        break;
+                    case 'ArrowUp':
+                        if (direction.y !== 1) direction = { x: 0, y: -1 };
+                        break;
+                    case 'ArrowDown':
+                        if (direction.y !== -1) direction = { x: 0, y: 1 };
+                        break;
+                }
+            });
+        }
+
+        // Modifica la gestione dell'orientamento per mobile
         function handleOrientation(event) {
-            if (!isPlayerControlled) return;
+            if (!isPlayerControlled || !isMobile) return;
             
             const beta = event.beta;  // Inclinazione frontale (-180 to 180)
             const gamma = event.gamma; // Inclinazione laterale (-90 to 90)
             
+            // Aumenta la sensibilità per mobile
             if (Math.abs(gamma) > Math.abs(beta)) {
-                // Movimento orizzontale
-                if (gamma > 10 && direction.x !== -1) {
+                if (gamma > 5 && direction.x !== -1) {
                     direction = { x: 1, y: 0 };
-                } else if (gamma < -10 && direction.x !== 1) {
+                } else if (gamma < -5 && direction.x !== 1) {
                     direction = { x: -1, y: 0 };
                 }
             } else {
-                // Movimento verticale
-                if (beta > 10 && direction.y !== -1) {
+                if (beta > 5 && direction.y !== -1) {
                     direction = { x: 0, y: 1 };
-                } else if (beta < -10 && direction.y !== 1) {
+                } else if (beta < -5 && direction.y !== 1) {
                     direction = { x: 0, y: -1 };
                 }
+            }
+        }
+
+        // Gestione del ridimensionamento
+        window.addEventListener('resize', () => {
+            if (isMobile) {
+                resizeGame();
+                // Ricrea la matrice con le nuove dimensioni
+                matrixContainer.innerHTML = '';
+                matrixCells.length = 0;
+                cellUpdateDelays.length = 0;
+                
+                const mobileCols = Math.floor(window.innerWidth / gridSize);
+                const mobileRows = Math.floor(window.innerHeight / gridSize);
+                
+                for (let i = 0; i < mobileRows; i++) {
+                    for (let j = 0; j < mobileCols; j++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'matrix-cell';
+                        matrixContainer.appendChild(cell);
+                        matrixCells.push(cell);
+                        const delay = (i + j) * 20;
+                        cellUpdateDelays.push(delay);
+                    }
+                }
+            }
+        });
+
+        // Inizializzazione
+        if (isMobile) {
+            resizeGame();
+            // Blocca l'orientamento in portrait
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('portrait')
+                    .catch(console.error);
             }
         }
 
@@ -236,11 +301,11 @@
             };
         }
         
-        // Aggiorna il gradiente del serpente (invertito)
+        // Aggiorna il gradiente del serpente
         function updateGradient(targetColor) {
             currentGradient = [];
             for(let i = 0; i < 256; i++) {
-                const ratio = 1 - (i / 255); // Invertito il ratio
+                const ratio = i / 255;
                 currentGradient.push({
                     r: Math.floor(targetColor.r * ratio),
                     g: Math.floor(targetColor.g * ratio),
@@ -342,82 +407,8 @@
             }, 100);
         }
         
-        // Funzione per disegnare un frattale di Koch a 8 bit
-        function drawKochSnake(x, y, size, depth) {
-            if (depth === 0 || size < 4) {
-                ctx.fillRect(x, y, size, size);
-                return;
-            }
-            
-            const newSize = size / 3;
-            const positions = [
-                [x, y],
-                [x + newSize, y],
-                [x + newSize, y + newSize],
-                [x + 2 * newSize, y + newSize],
-                [x + 2 * newSize, y + 2 * newSize],
-                [x + newSize, y + 2 * newSize],
-                [x, y + 2 * newSize],
-                [x, y + newSize]
-            ];
-            
-            positions.forEach(([px, py]) => {
-                drawKochSnake(px, py, newSize, depth - 1);
-            });
-        }
-
-        // Funzione per trasformare il serpente in frattale
-        function transformSnake() {
-            isTransforming = true;
-            isPaused = true;
-            
-            // Calcola il centro del serpente
-            const bounds = snake.reduce((acc, segment) => {
-                acc.minX = Math.min(acc.minX, segment.x);
-                acc.maxX = Math.max(acc.maxX, segment.x);
-                acc.minY = Math.min(acc.minY, segment.y);
-                acc.maxY = Math.max(acc.maxY, segment.y);
-                return acc;
-            }, { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity });
-            
-            const centerX = (bounds.minX + bounds.maxX) / 2 * gridSize;
-            const centerY = (bounds.minY + bounds.maxY) / 2 * gridSize;
-            const size = Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY) * gridSize * 1.5;
-            
-            // Animazione di trasformazione
-            let frame = 0;
-            const animateTransformation = () => {
-                if (frame < 50) {
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.save();
-                    ctx.translate(centerX, centerY);
-                    ctx.rotate(frame * Math.PI / 25);
-                    ctx.translate(-centerX, -centerY);
-                    
-                    const color = currentGradient[Math.floor(frame * 5) % 256];
-                    ctx.fillStyle = `rgb(${color.r},${color.g},${color.b})`;
-                    drawKochSnake(centerX - size/2, centerY - size/2, size, 3);
-                    
-                    ctx.restore();
-                    frame++;
-                    requestAnimationFrame(animateTransformation);
-                } else {
-                    // Ripristina dopo 5 secondi
-                    transformationTimeout = setTimeout(() => {
-                        isTransforming = false;
-                        isPaused = false;
-                        transformationTimeout = null;
-                    }, 5000);
-                }
-            };
-            
-            animateTransformation();
-        }
-
-        // Modifica la funzione update per gestire la pausa e il conteggio dei punti
+        // Aggiorna il gioco
         function update() {
-            if (isPaused) return;
-            
             if(!food) createFood();
             
             const path = findPath();
@@ -441,14 +432,8 @@
             snake.unshift(head);
             
             if(head.x === food.x && head.y === food.y) {
-                if (isPlayerControlled) {
-                    score++;
-                    updateScore();
-                    // Controlla se è il momento di trasformare il serpente (ogni 5 punti)
-                    if (score % 5 === 0 && !isTransforming) {
-                        transformSnake();
-                    }
-                }
+                score++;
+                scoreElement.textContent = `Score: ${score}`;
                 updateGradient(food.color);
                 createExplosion(food.x, food.y, food.color);
                 triggerFlash();
@@ -459,11 +444,9 @@
             
             updateParticles();
         }
-
-        // Modifica la funzione draw per gestire la trasformazione
+        
+        // Disegna il gioco
         function draw() {
-            if (isTransforming) return; // La trasformazione ha la sua logica di disegno
-            
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             // Disegna il serpente
@@ -488,23 +471,7 @@
                 ctx.fill();
             });
         }
-
-        // Modifica la funzione updateScore per mostrare/nascondere i punteggi
-        function updateScore() {
-            if (!isPlayerControlled) {
-                scoreElement.textContent = 'CPU Mode';
-                highScoreElement.style.display = 'none';
-                return;
-            }
-            
-            highScoreElement.style.display = 'block';
-            if (score > highScore) {
-                highScore = score;
-                highScoreElement.textContent = `High: ${highScore}`;
-            }
-            scoreElement.textContent = `Score: ${score}`;
-        }
-
+        
         // Inizializza la matrice
         const matrixContainer = document.getElementById('matrixContainer');
         const matrixCols = 40;  // Più celle per una matrice più densa
@@ -531,47 +498,11 @@
         }
 
         function updateMatrix() {
-            switch(matrixMode) {
-                case 1:
-                    // Matrix originale (dall'alto verso il basso)
-                    matrixCells.forEach((cell, index) => {
-                        setTimeout(() => {
-                            updateCell(index);
-                        }, cellUpdateDelays[index] % 500);
-                    });
-                    break;
-                case 2:
-                    // Matrix dal centro verso l'esterno
-                    const centerX = Math.floor(matrixCols / 2);
-                    const centerY = Math.floor(matrixRows / 2);
-                    matrixCells.forEach((cell, index) => {
-                        const x = index % matrixCols;
-                        const y = Math.floor(index / matrixCols);
-                        const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
-                        setTimeout(() => {
-                            updateCell(index);
-                        }, distance * 100);
-                    });
-                    break;
-                case 3:
-                    // Matrix a spirale
-                    const spiralDelay = (x, y) => {
-                        const centerX = matrixCols / 2;
-                        const centerY = matrixRows / 2;
-                        const angle = Math.atan2(y - centerY, x - centerX);
-                        const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
-                        return (angle + Math.PI) * 100 + distance * 50;
-                    };
-                    
-                    matrixCells.forEach((cell, index) => {
-                        const x = index % matrixCols;
-                        const y = Math.floor(index / matrixCols);
-                        setTimeout(() => {
-                            updateCell(index);
-                        }, spiralDelay(x, y));
-                    });
-                    break;
-            }
+            matrixCells.forEach((cell, index) => {
+                setTimeout(() => {
+                    updateCell(index);
+                }, cellUpdateDelays[index] % 500); // Mantiene i ritardi entro il ciclo di 500ms
+            });
         }
 
         // Loop principale del gioco modificato
