@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+  <title>Moltiplicazioni</title>
+  <style>
+    
+    /* Moltiplicazioni v.12 */
+	/* i tasti "Reset Log" "Salva log" "DEL" */
+	
+	/* Prevenzione del touch delay su iOS */
+	* {
+	  -webkit-tap-highlight-color: transparent;
+	  touch-action: manipulation;
+	}
+	
+	/* Stili generali per il body in Dark (predefinito) */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #222; /* Sfondo scuro */
+      color: #eee;
+      transition: background-color 0.3s, color 0.3s;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    /* Tema Light: override per background e colore testo */
+    .light-theme {
+      background-color: #fff;
+      color: #000;
+    }
+    /* Container della domanda */
+    #question {
+      margin: 20px 0;
+      padding: 10px;
+      background: #444;
+      transition: background 0.3s;
+    }
+    .light-theme #question {
+      background: #f0f0f0;
+    }
+    /* Testo della domanda */
+    #question-text-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 0;
+      font-size: 24px;
+    }
+    #question-text {
+      flex: 0 0 auto;
+      text-align: right;
+      min-width: 120px;
+    }
+    /* Campo di input */
+    #answer {
+      font-size: 20px;
+      width: 100px;
+      padding: 5px;
+      background-color: #333;
+      color: #eee;
+      border: 1px solid #444;
+      transition: background-color 0.3s, color 0.3s, border 0.3s;
+      text-align: left;
+      margin-right: auto;
+    }
+    .light-theme #answer {
+      background-color: #fff;
+      color: #000;
+      border: 1px solid #ccc;
+    }
+    /* Bottone tema (simboli Unicode) */
+    #theme-toggle {
+      flex: 0 0 auto;
+      font-size: 24px;
+      padding: 5px 10px;
+      cursor: pointer;
+      background-color: #444;
+      color: #eee;
+      border: 1px solid grey;
+      border-radius: 3px;
+      transition: background-color 0.3s, color 0.3s;
+      margin-left: 10px;
+    }
+    .light-theme #theme-toggle {
+      background-color: #f0f0f0;
+      color: #000;
+      border: 1px solid grey;
+    }
+    /* Box delle statistiche */
+    #stats {
+      margin: 20px 0;
+      padding: 15px;
+      background: #333;
+      border-radius: 5px;
+      transition: background 0.3s;
+    }
+    .light-theme #stats {
+      background: #f8f8f8;
+    }
+    /* Sezione per gli errori recenti */
+    #recent-errors {
+      color: #cc0000;
+      margin-top: 30px;
+    }
+    .error { color: #ff0000; }
+    .warning { color: #ff9900; }
+    .success { color: #009900; }
+    
+    /* Stile per i tasti della tastiera numerica */
+    button.key {
+      padding: 10px;
+      font-size: 20px;
+      cursor: pointer;
+      background-color: #444;
+      color: #eee;
+      border: 1px solid grey;
+      border-radius: 3px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .light-theme button.key {
+      background-color: #f0f0f0;
+      color: #000;
+      border: 1px solid grey;
+    }
+    
+    /* Tastiera numerica personalizzata */
+    #custom-keyboard {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .keyboard-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+    }
+    .placeholder {
+      visibility: hidden;
+    }
+    .small-keys-container {
+      display: flex;
+      gap: 5px;
+    }
+    .small-keys-container .key {
+      flex: 1;
+      padding: 5px;
+      font-size: 10px;
+      cursor: pointer;
+    }
+    /* Tasto Enter (rappresentato da "↵") */
+    .enter-key { }
+    
+    /* Container per i tasti del log */
+    #log-buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin: 20px 0;
+    }
+    #log-buttons button {
+      font-size: 20px;
+      padding: 10px;
+      cursor: pointer;
+      background-color: #444;
+      color: #eee;
+      border: 1px solid grey;
+      border-radius: 3px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .light-theme #log-buttons button {
+      background-color: #f0f0f0;
+      color: #000;
+      border: 1px solid grey;
+    }
+    
+    /* Regole responsive per dispositivi con schermi piccoli */
+    @media (max-width: 600px) {
+      body {
+        margin: 10px;
+        padding: 10px;
+        font-size: 16px;
+      }
+      #question-text-container {
+        font-size: 32px;
+      }
+      #answer {
+        width: 100px;
+        font-size: 24px;
+        padding: 10px;
+        border-radius: 8px;
+      }
+      #log-buttons {
+        gap: 8px;
+      }
+      #log-buttons button {
+        padding: 15px;
+        font-size: 16px;
+        border-radius: 8px;
+        min-height: 60px;
+      }
+    }
+    
+    /* Stili specifici per iOS */
+    @supports (-webkit-touch-callout: none) {
+      button.key:active {
+        background-color: #666;
+      }
+      .light-theme button.key:active {
+        background-color: #ddd;
+      }
+      input[type="text"] {
+        -webkit-appearance: none;
+        appearance: none;
+      }
+    }
+  </style>
+  <!-- Favicon per dispositivi Apple e altri -->
+  <link rel="apple-touch-icon" href="https://www.iconarchive.com/download/i3927/bad-blood/yolks-2/X3.128.png">
+  <link rel="icon" href="https://www.iconarchive.com/download/i3927/bad-blood/yolks-2/X3.48.png" type="image/png">
+</head>
+<body>
+  <!-- Sezione domanda con testo e riga di input + tema -->
+  <div id="question">
+    <div id="question-text-container">
+      <span id="question-text"></span>
+      <input type="text" id="answer" placeholder="?" readonly>
+      <button id="theme-toggle">☀</button>
+    </div>
+  </div>
+  
+  <!-- Tastiera numerica personalizzata -->
+  <div id="custom-keyboard">
+    <!-- Riga 1 -->
+    <div class="keyboard-row">
+      <button class="key" data-value="1">1</button>
+      <button class="key" data-value="2">2</button>
+      <button class="key" data-value="3">3</button>
+      <button onclick="resetLog()">Reset Log</button>
+    </div>
+    <!-- Riga 2 -->
+    <div class="keyboard-row">
+      <button class="key" data-value="4">4</button>
+      <button class="key" data-value="5">5</button>
+      <button class="key" data-value="6">6</button>
+      <button onclick="saveLogToFile()">Salva Log</button>
+    </div>
+    <!-- Riga 3 -->
+    <div class="keyboard-row">
+      <button class="key" data-value="7">7</button>
+      <button class="key" data-value="8">8</button>
+      <button class="key" data-value="9">9</button>
+      <button onclick="deleteInput()">DEL</button>
+    </div>
+    <!-- Riga 4 -->
+    <div class="keyboard-row last-row">
+      <div class="small-keys-container">
+        <button class="key small-key" data-value=",">,</button>
+        <button class="key small-key" data-value=".">.</button>
+      </div>
+      <button class="key" data-value="0">0</button>
+      <button class="key enter-key">↵</button>
+      <div class="placeholder"></div>
+    </div>
+  </div>
+  
+  <!-- Sezione statistiche -->
+  <div id="stats">
+    <h3>Statistiche:</h3>
+    <p>Errori/Domande: <span id="error-count">0</span>/<span id="total-questions">0</span></p>
+    <p>Percentuale corrette: <span id="accuracy">100</span>%</p>
+    <p>Tempo medio: <span id="average-time">0</span>s</p>
+  </div>
+
+  <!-- Sezione errori recenti -->
+  <div id="recent-errors">
+    <h3>Errori Recenti:</h3>
+    <ul id="errors-list"></ul>
+  </div>
+
+  <script>
+    // Variabili globali per gestire lo stato del gioco
+    let errorCount = 0;           // Numero di risposte errate
+    let totalQuestions = 0;       // Numero totale di domande
+    let responseTimes = [];       // Array per i tempi di risposta
+    let currentQuestion = {};     // Oggetto per la domanda corrente
+    let startTime;                // Tempo in cui la domanda viene mostrata
+
+    // Genera una nuova domanda di moltiplicazione
+    function generateQuestion() {
+      currentQuestion = {
+        num1: Math.floor(Math.random() * 6) + 4,
+        num2: Math.floor(Math.random() * 6) + 4
+      };
+      currentQuestion.result = currentQuestion.num1 * currentQuestion.num2;
+      document.getElementById('question-text').textContent =
+        `${currentQuestion.num1} × ${currentQuestion.num2} =`;
+      startTime = Date.now();
+      totalQuestions++;
+    }
+
+    // Aggiorna le statistiche visualizzate
+    function updateStats() {
+      document.getElementById('error-count').textContent = errorCount;
+      document.getElementById('total-questions').textContent = totalQuestions;
+      const accuracy = totalQuestions > 0 ?
+        (((totalQuestions - errorCount) / totalQuestions) * 100).toFixed(1) : 100;
+      document.getElementById('accuracy').textContent = accuracy;
+      const avgTime = responseTimes.length > 0 ?
+        (responseTimes.reduce((a, b) => a + b) / responseTimes.length).toFixed(1) : 0;
+      document.getElementById('average-time').textContent = avgTime;
+    }
+
+    // Salva un errore nel log (localStorage)
+    function saveError(error) {
+      const errors = JSON.parse(localStorage.getItem('mathErrors') || '[]');
+      errors.unshift(error);
+      localStorage.setItem('mathErrors', JSON.stringify(errors.slice(0, 20)));
+      showRecentErrors();
+    }
+
+    // Mostra la lista degli errori recenti
+    function showRecentErrors() {
+      const errors = JSON.parse(localStorage.getItem('mathErrors') || '[]');
+      const list = document.getElementById('errors-list');
+      list.innerHTML = errors.map(e => `<li>${e}</li>`).join('');
+    }
+
+    // Resetta il log degli errori
+    function resetLog() {
+      localStorage.removeItem('mathErrors');
+      showRecentErrors();
+    }
+
+    // Salva il log in un file di testo scaricabile
+    function saveLogToFile() {
+      const errors = JSON.parse(localStorage.getItem('mathErrors') || '[]');
+      if(errors.length === 0) {
+        return;
+      }
+      const logContent = errors.join("\n");
+      const blob = new Blob([logContent], { type: 'text/plain' });
+      const now = new Date();
+      const formattedTimestamp =
+        now.getFullYear() + '-' +
+        ('0' + (now.getMonth() + 1)).slice(-2) + '-' +
+        ('0' + now.getDate()).slice(-2) + '_' +
+        ('0' + now.getHours()).slice(-2) + '_' +
+        ('0' + now.getMinutes()).slice(-2);
+      const filename = `${formattedTimestamp} Errori moltiplicazioni.txt`;
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // Cancella il contenuto del campo di input
+    function deleteInput() {
+      document.getElementById('answer').value = '';
+      document.getElementById('answer').focus();
+    }
+
+    // Verifica la risposta dell'utente
+    function checkAnswer() {
+      const answerField = document.getElementById('answer');
+      const userAnswer = answerField.value.trim();
+      answerField.value = '';
+      const responseTime = (Date.now() - startTime) / 1000;
+      responseTimes.push(responseTime);
+
+      if(userAnswer === '') {
+        errorCount++;
+        saveError(`${currentQuestion.num1}×${currentQuestion.num2} = ${currentQuestion.result}  (nessuna risposta)`);
+        updateStats();
+        generateQuestion();
+        answerField.focus();
+        return;
+      }
+
+      if(isNaN(userAnswer)) {
+        totalQuestions--;
+        updateStats();
+        answerField.focus();
+        return;
+      }
+
+      if(parseInt(userAnswer) !== currentQuestion.result) {
+        errorCount++;
+        saveError(`${currentQuestion.num1}×${currentQuestion.num2} = ${currentQuestion.result}  (hai risposto ${userAnswer})`);
+      }
+
+      updateStats();
+      generateQuestion();
+      answerField.focus();
+    }
+
+    // Inizializzazione al caricamento della pagina
+    window.onload = function() {
+      generateQuestion();
+      showRecentErrors();
+      document.getElementById('answer').focus();
+
+      // Gestione del cambio tema tramite icone Unicode
+      const themeToggle = document.getElementById('theme-toggle');
+      themeToggle.addEventListener('click', function() {
+        if(document.body.classList.contains('light-theme')) {
+          document.body.classList.remove('light-theme');
+          themeToggle.textContent = '☀';
+        } else {
+          document.body.classList.add('light-theme');
+          themeToggle.textContent = '🌙';
+        }
+      });
+
+      // Ottimizzazioni per dispositivi touch
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      
+      // Gestione degli eventi per la tastiera personalizzata
+      document.querySelectorAll('#custom-keyboard .key').forEach(button => {
+        // Utilizzo di touchstart/touchend per una risposta più veloce su iOS
+        if (isIOS) {
+          button.addEventListener('touchstart', function(e) {
+            e.preventDefault(); // Previene il doppio tap su iOS
+            const answerField = document.getElementById('answer');
+            if(this.classList.contains('enter-key')) {
+              checkAnswer();
+            } else {
+              answerField.value += this.getAttribute('data-value');
+            }
+          });
+        } else {
+          button.addEventListener('click', function() {
+            const answerField = document.getElementById('answer');
+            if(this.classList.contains('enter-key')) {
+              checkAnswer();
+            } else {
+              answerField.value += this.getAttribute('data-value');
+            }
+            answerField.focus();
+          });
+        }
+      });
+
+      // Disabilita lo zoom al doppio tap su iOS
+      document.addEventListener('touchstart', function(e) {
+        if (e.touches.length > 1) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+
+      // Disabilita il bounce effect su iOS
+      document.body.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+      }, { passive: false });
+    };
+  </script>
+</body>
+</html>
