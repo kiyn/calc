@@ -58,7 +58,7 @@
             justify-content: center;
             align-items: center;
             font-family: monospace;
-            font-size: 10px;
+            font-size: 11px;
             color: #888;
             text-shadow: 0 0 2px #888;
             font-weight: bold;
@@ -279,29 +279,38 @@
         }
 
         function startGame() {
-            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission()
-                    .then(permissionState => {
-                        if (permissionState === 'granted') {
-                            window.addEventListener('deviceorientation', handleOrientation);
-                        }
-                    })
-                    .catch(console.error);
-            } else {
-                window.addEventListener('deviceorientation', handleOrientation);
-            }
+            // Non fare nulla qui, i permessi vengono gestiti nel click del pulsante Play
         }
 
         playBtn.addEventListener('click', () => {
             isPlayerControlled = !isPlayerControlled;
             playBtn.classList.toggle('active');
+            
             if (!isPlayerControlled) {
                 score = 0;
                 foodEaten = 0;
                 updateScore();
                 window.removeEventListener('deviceorientation', handleOrientation);
             } else {
-                showInstructions();
+                if (isMobile) {
+                    // Richiedi i permessi per l'orientamento su iOS
+                    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                        DeviceOrientationEvent.requestPermission()
+                            .then(permissionState => {
+                                if (permissionState === 'granted') {
+                                    window.addEventListener('deviceorientation', handleOrientation);
+                                    showInstructions();
+                                }
+                            })
+                            .catch(console.error);
+                    } else {
+                        // Per Android e altri dispositivi che non richiedono permessi
+                        window.addEventListener('deviceorientation', handleOrientation);
+                        showInstructions();
+                    }
+                } else {
+                    showInstructions();
+                }
             }
         });
 
@@ -722,7 +731,7 @@
             for (let j = 0; j < matrixCols; j++) {
                 const cell = document.createElement('div');
                 cell.className = 'matrix-cell';
-                cell.style.fontSize = '10px';  // Riduce la dimensione del font per adattarsi alla griglia più fitta
+                cell.style.fontSize = '11px';  // Aumenta la dimensione del font di 1px
                 matrixContainer.appendChild(cell);
                 matrixCells.push(cell);
             }
