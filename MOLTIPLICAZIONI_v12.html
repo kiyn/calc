@@ -115,20 +115,20 @@
     .success { color: #009900; }
     
     /* Stile per i tasti della tastiera numerica */
-    button.key {
+    button.key, button {
       padding: 10px;
       font-size: 20px;
       cursor: pointer;
       background-color: #444;
       color: #eee;
-      border: 1px solid grey;
+      border: 1px solid #666;
       border-radius: 3px;
       transition: background-color 0.3s, color 0.3s;
     }
-    .light-theme button.key {
+    .light-theme button.key, .light-theme button {
       background-color: #f0f0f0;
       color: #000;
-      border: 1px solid grey;
+      border: 1px solid #ccc;
     }
     
     /* Tastiera numerica personalizzata */
@@ -145,49 +145,21 @@
       gap: 5px;
       width: 100%;
     }
+    .last-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 5px;
+    }
+    .small-keys-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+    }
     .action-row {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 5px;
       margin-top: 10px;
-    }
-    .placeholder {
-      visibility: hidden;
-    }
-    .small-keys-container {
-      display: flex;
-      gap: 5px;
-    }
-    .small-keys-container .key {
-      flex: 1;
-      padding: 5px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    /* Tasto Enter (rappresentato da "↵") */
-    .enter-key { }
-    
-    /* Container per i tasti del log */
-    #log-buttons {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      margin: 20px 0;
-    }
-    #log-buttons button {
-      font-size: 20px;
-      padding: 10px;
-      cursor: pointer;
-      background-color: #444;
-      color: #eee;
-      border: 1px solid grey;
-      border-radius: 3px;
-      transition: background-color 0.3s, color 0.3s;
-    }
-    .light-theme #log-buttons button {
-      background-color: #f0f0f0;
-      color: #000;
-      border: 1px solid grey;
     }
     
     /* Regole responsive per dispositivi con schermi piccoli */
@@ -210,6 +182,10 @@
         padding: 20px;
         font-size: 28px;
       }
+      .small-keys-container .key {
+        padding: 20px;
+        font-size: 28px;
+      }
       .action-row button {
         padding: 15px;
         font-size: 20px;
@@ -218,11 +194,13 @@
     
     /* Stili specifici per iOS */
     @supports (-webkit-touch-callout: none) {
-      button.key:active {
+      button.key:active, button:active {
         background-color: #666;
+        border: 1px solid #888;
       }
-      .light-theme button.key:active {
+      .light-theme button.key:active, .light-theme button:active {
         background-color: #ddd;
+        border: 1px solid #999;
       }
       input[type="text"] {
         -webkit-appearance: none;
@@ -244,6 +222,20 @@
     </div>
   </div>
   
+  <!-- Sezione statistiche -->
+  <div id="stats">
+    <h3>Statistiche:</h3>
+    <p>Errori/Domande: <span id="error-count">0</span>/<span id="total-questions">0</span></p>
+    <p>Percentuale corrette: <span id="accuracy">100</span>%</p>
+    <p>Tempo medio: <span id="average-time">0</span>s</p>
+  </div>
+
+  <!-- Sezione errori recenti -->
+  <div id="recent-errors">
+    <h3>Errori Recenti:</h3>
+    <ul id="errors-list"></ul>
+  </div>
+
   <!-- Tastiera numerica personalizzata -->
   <div id="custom-keyboard">
     <!-- Riga 1 -->
@@ -265,10 +257,13 @@
       <button class="key" data-value="9">9</button>
     </div>
     <!-- Riga 4 -->
-    <div class="keyboard-row">
-      <button class="key" data-value="0">0</button>
-      <button class="key enter-key">↵</button>
-      <div class="placeholder"></div>
+    <div class="keyboard-row last-row">
+      <div class="small-keys-container">
+        <button class="key" data-value=",">,</button>
+        <button class="key" data-value=".">.</button>
+        <button class="key" data-value="0">0</button>
+        <button class="key enter-key">↵</button>
+      </div>
     </div>
     <!-- Riga azioni -->
     <div class="action-row">
@@ -276,20 +271,6 @@
       <button onclick="saveLogToFile()">Salva Log</button>
       <button onclick="deleteInput()">DEL</button>
     </div>
-  </div>
-  
-  <!-- Sezione statistiche -->
-  <div id="stats">
-    <h3>Statistiche:</h3>
-    <p>Errori/Domande: <span id="error-count">0</span>/<span id="total-questions">0</span></p>
-    <p>Percentuale corrette: <span id="accuracy">100</span>%</p>
-    <p>Tempo medio: <span id="average-time">0</span>s</p>
-  </div>
-
-  <!-- Sezione errori recenti -->
-  <div id="recent-errors">
-    <h3>Errori Recenti:</h3>
-    <ul id="errors-list"></ul>
   </div>
 
   <script>
