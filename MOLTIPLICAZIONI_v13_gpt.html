@@ -9,16 +9,16 @@
   <title>Moltiplicazioni</title>
   <style>
     
-    /* Moltiplicazioni v.12 */
-	/* i tasti "Reset Log" "Salva log" "DEL" */
-	
-	/* Prevenzione del touch delay su iOS */
-	* {
-	  -webkit-tap-highlight-color: transparent;
-	  touch-action: manipulation;
-	}
-	
-	/* Stili generali per il body in Dark (predefinito) */
+    /* Moltiplicazioni v.13 */
+    /* i tasti "Reset Log" "Salva log" "DEL" */
+    
+    /* Prevenzione del touch delay su iOS */
+    * {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    
+    /* Stili generali per il body in Dark (predefinito) */
     body {
       font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
       max-width: 800px;
@@ -156,19 +156,15 @@
       gap: 5px;
       width: 100%;
     }
-    .last-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 5px;
+    /* La quarta riga della tastiera ha una griglia con 4 colonne:
+       - Il tasto virgola (,) avrà larghezza doppia (2fr)
+       - Il tasto backspace (⌫) larghezza tripla (3fr)
+       - I tasti "0" e "↵" mantengono larghezza normale (1fr ciascuno)
+    */
+    .keyboard-row.row4 {
+      grid-template-columns: 2fr 3fr 1fr 1fr;
     }
-    .small-keys-container {
-      display: grid;
-      grid-template-columns: auto auto 1fr;
-      gap: 2px;
-    }
-    .comma-key {
-      max-width: 50%;
-    }
+    
     .action-row {
       display: flex;
       gap: 10px;
@@ -195,10 +191,6 @@
         border-radius: 8px;
       }
       button.key {
-        padding: 20px;
-        font-size: 28px;
-      }
-      .small-keys-container .key {
         padding: 20px;
         font-size: 28px;
       }
@@ -274,12 +266,10 @@
       <button class="key" data-value="8">8</button>
       <button class="key" data-value="9">9</button>
     </div>
-    <!-- Riga 4 -->
-    <div class="keyboard-row">
-      <div class="small-keys-container">
-        <button class="key comma-key" data-value=",">,</button>
-        <button onclick="deleteInput()" class="key">⌫</button>
-      </div>
+    <!-- Riga 4: layout personalizzato -->
+    <div class="keyboard-row row4">
+      <button class="key comma-key" data-value=",">,</button>
+      <button class="key backspace-key" onclick="deleteInput()">⌫</button>
       <button class="key" data-value="0">0</button>
       <button class="key enter-key">↵</button>
     </div>
@@ -430,23 +420,23 @@
       
       // Gestione degli eventi per la tastiera personalizzata
       document.querySelectorAll('#custom-keyboard .key').forEach(button => {
-        // Utilizzo di touchstart/touchend per una risposta più veloce su iOS
         if (isIOS) {
           button.addEventListener('touchstart', function(e) {
             e.preventDefault(); // Previene il doppio tap su iOS
             const answerField = document.getElementById('answer');
             if(this.classList.contains('enter-key')) {
               checkAnswer();
-            } else {
+            } else if(this.getAttribute('data-value') !== null) {
               answerField.value += this.getAttribute('data-value');
             }
+            answerField.focus();
           });
         } else {
           button.addEventListener('click', function() {
             const answerField = document.getElementById('answer');
             if(this.classList.contains('enter-key')) {
               checkAnswer();
-            } else {
+            } else if(this.getAttribute('data-value') !== null) {
               answerField.value += this.getAttribute('data-value');
             }
             answerField.focus();

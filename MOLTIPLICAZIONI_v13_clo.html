@@ -9,7 +9,7 @@
   <title>Moltiplicazioni</title>
   <style>
     
-    /* Moltiplicazioni v.12 */
+    /* Moltiplicazioni v.13 */
 	/* i tasti "Reset Log" "Salva log" "DEL" */
 	
 	/* Prevenzione del touch delay su iOS */
@@ -163,11 +163,14 @@
     }
     .small-keys-container {
       display: grid;
-      grid-template-columns: auto auto 1fr;
+      grid-template-columns: 2fr 3fr 1fr;
       gap: 2px;
     }
     .comma-key {
-      max-width: 50%;
+      width: 100%;
+    }
+    .backspace-key {
+      width: 100%;
     }
     .action-row {
       display: flex;
@@ -278,7 +281,7 @@
     <div class="keyboard-row">
       <div class="small-keys-container">
         <button class="key comma-key" data-value=",">,</button>
-        <button onclick="deleteInput()" class="key">⌫</button>
+        <button class="key backspace-key" id="backspace">⌫</button>
       </div>
       <button class="key" data-value="0">0</button>
       <button class="key enter-key">↵</button>
@@ -437,7 +440,9 @@
             const answerField = document.getElementById('answer');
             if(this.classList.contains('enter-key')) {
               checkAnswer();
-            } else {
+            } else if(this.id === 'backspace') {
+              deleteInput();
+            } else if(this.hasAttribute('data-value')) {
               answerField.value += this.getAttribute('data-value');
             }
           });
@@ -446,7 +451,9 @@
             const answerField = document.getElementById('answer');
             if(this.classList.contains('enter-key')) {
               checkAnswer();
-            } else {
+            } else if(this.id === 'backspace') {
+              deleteInput();
+            } else if(this.hasAttribute('data-value')) {
               answerField.value += this.getAttribute('data-value');
             }
             answerField.focus();
